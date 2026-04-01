@@ -1,0 +1,64 @@
+---
+title: "Gov 51 - PSet 3"
+author: "Tyler Dang"
+format: pdf
+editor: visual
+---
+
+# 1. Setup And Data Exploration
+
+## Load Packages and Data
+
+## Observations and Variables? Unit?
+
+## Examine the Outcome Variable
+
+## Summary Statistics
+
+## Explore Key Predictors
+
+# 2. OLS Baseline
+
+## Train/test Split
+
+## Fit OLS with Main Effects Only
+
+## In-Sample vs Out-of-sample RMSE
+
+## Cross-Validation by Hand
+
+# 3. The Kitchen Sink: What Happens when You Add Too Many Predictors?
+
+## Build the Expanded Model
+
+## Fit OLS with the Kitchen Sink
+
+## The Overfitting Lesson
+
+# 4. Ridge Regression: Shrink Everything
+
+## Fit Ridge with Cross-validation
+
+## Ridge RMSE
+
+## Did Ridge set any Coefficients to Zero
+
+# 5. LASSO Regression: Shrink and Select
+
+## Fit LASSO with Cross–Validation
+
+## LASSO Variable Selection
+
+## LASSO RMSE
+
+# 6. Model Comparison and Interpretation
+
+## Elastic Net
+
+## Big Comparison Table
+
+## Baker Article Connection
+
+## Prediction vs Explanation
+
+## Algorithmic Fairness
