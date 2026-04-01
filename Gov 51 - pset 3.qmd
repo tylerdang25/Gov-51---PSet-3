@@ -9,13 +9,73 @@ editor: visual
 
 ## Load Packages and Data
 
+```{r}
+library(tidyverse)
+library(glmnet)
+library(knitr)
+```
+
+```{r}
+compas <- read.csv("data/raw/compas_clean.csv")
+```
+
 ## Observations and Variables? Unit?
+
+```{r}
+dim(compas)
+```
+
+There are 7214 observations in the Compas dataset and 17 variables.
 
 ## Examine the Outcome Variable
 
+```{r}
+mean(compas$recidivism)
+```
+
+The recidivism rate is .451.
+
+The outcome is binary as it takes only two values: 0 or 1.
+
+This matters for linear models because a linear probability model produces predictions as probabilities of recidivism, but linear models can produce predictions below 0 or above 1 which are not reasonable as probabilities, but rather a change in probability.
+
 ## Summary Statistics
 
+```{r}
+summary_table <- data.frame(variable = names(compas),
+                            mean = sapply(compas, mean, na.rm = TRUE),
+                            sd   = sapply(compas, sd, na.rm = TRUE))
+kable(summary_table, digits = 3)
+```
+
+We can see that age with a sd of 11.889 has the largest variation, while native_american (the dummy variable for whether a observation is native american) a sd of .050 has the least variation.
+
 ## Explore Key Predictors
+
+```{r}
+compas$priors_cat <- NA
+
+compas$priors_cat[compas$priors_count == 0] <- "0"
+compas$priors_cat[compas$priors_count %in% 1:2] <- "1-2"
+compas$priors_cat[compas$priors_count %in% 3:5] <- "3-5"
+compas$priors_cat[compas$priors_count %in% 6:10] <- "6-10"
+compas$priors_cat[compas$priors_count >= 11] <- "11+"
+
+compas$priors_cat <- factor(compas$priors_cat,
+                            levels = c("0", "1-2", "3-5", "6-10", "11+"))
+
+rates <- compas %>%
+  group_by(priors_cat) %>%
+  summarise(rate = mean(recidivism, na.rm = TRUE))
+
+ggplot(rates, aes(x = priors_cat, y = rate, fill = priors_cat)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Number of Prior Offenses",
+       y = "Recidivism Rate") + 
+  theme(legend.position = "none")
+```
+
+We can see that as the number of prior offenses increases, the recidivism rate increases.
 
 # 2. OLS Baseline
 
