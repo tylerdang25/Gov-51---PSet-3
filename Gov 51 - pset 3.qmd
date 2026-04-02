@@ -213,9 +213,41 @@ Adding so many interaction terms increased the models flexibility, so it began t
 
 ## Fit Ridge with Cross-validation
 
+```{r}
+set.seed(51) # for reproducible CV folds
+cv_ridge <- cv.glmnet(X_train, y_train, alpha = 0, nfolds = 10)
+
+cv_ridge$lambda.min
+plot(cv_ridge)
+```
+
+The optimal lambda is 0.0138
+
+From the graph we can see that prediction error decreases as $\lambda$ increases until it reaches an optimal balance at the minimum before error flattens.
+
 ## Ridge RMSE
 
+```{r}
+pred_ridge <- predict(cv_ridge, s = "lambda.min", newx = X_test)
+rmse_ridge <- sqrt(mean((y_test - pred_ridge)^2))
+rmse_ridge
+```
+
+Simple OLS RMSE: 0.4622
+
+Kitchen-Sink OLS RMSE: 0.489
+
+Ridge RMSE: 0.470
+
+The ridge regression improved to limit the overfitting from kitchen-sink by shrinking the coefficients thus reducing variance. It does not outperform the simple model though which indicates that the increase in interaction terms does not necessarily help.
+
 ## Did Ridge set any Coefficients to Zero
+
+```{r}
+coef(cv_ridge, s = "lambda.min")
+```
+
+No, Ridge did not eliminate any variables. Ridge shrinks coefficients towards zero but does not set them exactly to zero. So, we can see that most coefficients are very small but not zero. The entries shown as "." are not zero.
 
 # 5. LASSO Regression: Shrink and Select
 
