@@ -253,9 +253,59 @@ No, Ridge did not eliminate any variables. Ridge shrinks coefficients towards ze
 
 ## Fit LASSO with Cross–Validation
 
+```{r}
+set.seed(51)
+cv_lasso <- cv.glmnet(X_train, y_train, alpha = 1, nfolds = 10)
+
+cv_lasso$lambda.min
+
+plot(cv_lasso)
+```
+
+The optimal $\lambda$ is 0.00769
+
 ## LASSO Variable Selection
 
+```{r}
+coef_lasso <- coef(cv_lasso, s = "lambda.min")
+
+nonzero <- sum(coef_lasso != 0)
+zero    <- sum(coef_lasso == 0)
+
+nonzero
+zero
+```
+
+Excluding the "intercept" there are 27 variables retained (the nonzero minus one). Thus, there are 114 eliminated.
+
+```{r}
+coef_mat <- as.matrix(coef_lasso)
+nonzero_vars <- rownames(coef_mat)[coef_mat != 0]
+nonzero_vars
+```
+
+Some surviving interaction terms: age:female, female:priors_counts, and many more. These make substantive sense as they suggest that the effect of one risk factor may depend on other characteristic rather than being the same for all.
+
+LASSO reduces this subjective discretion because it selects variables on predictive performance than some choice of the researcher. So, instead of a human using their own intuition or biases to decide which interactions to include or not include, LASSO keeps the interactions that improve out-of sample prediction
+
 ## LASSO RMSE
+
+```{r}
+pred_lasso <- predict(cv_lasso, s = "lambda.min", newx = X_test)
+
+rmse_lasso <- sqrt(mean((y_test - pred_lasso)^2))
+rmse_lasso
+```
+
+Simple OLS RMSE: 0.4622
+
+Kitchen-Sink OLS RMSE: 0.489
+
+Ridge RMSE: 0.470
+
+LASSO RMSE: 0.4593
+
+Lasso performs the best for out-of-sample RMSE for all tests we have done.
 
 # 6. Model Comparison and Interpretation
 
