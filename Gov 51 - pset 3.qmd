@@ -311,10 +311,99 @@ Lasso performs the best for out-of-sample RMSE for all tests we have done.
 
 ## Elastic Net
 
+```{r}
+set.seed(51)
+
+cv_enet <- cv.glmnet(X_train, y_train, alpha = 0.5, nfolds = 10)
+
+pred_enet <- predict(cv_enet, s = "lambda.min", newx = X_test)
+
+rmse_enet <- sqrt(mean((y_test - pred_enet)^2))
+rmse_enet
+
+coef_enet <- as.matrix(coef(cv_enet, s = "lambda.min"))
+sum(coef_enet != 0) - 1
+```
+
+Out-of-sample RMSE: 0.4583
+
+Variables retained: 43
+
 ## Big Comparison Table
+
+```{r}
+comp_tb <- data.frame(Model = c("OLS (main effects, 16 vars)",
+                                         "OLS (kitchen sink, ~141 vars)",
+                                         "Ridge",
+                                         "LASSO",
+                                         "Elastic Net"),
+                               Predictors = c(length(coef(model2.2)) - 1,
+                                              ncol(X_train),
+                                              ncol(X_train),
+                                              sum(as.matrix(coef(cv_lasso, 
+                                                                 s = "lambda.min")) != 0) - 1,
+                                              sum(as.matrix(coef(cv_enet, 
+                                                                 s = "lambda.min")) != 0) - 1),
+                               "Out RMSE" = c(rmse_test,
+                                              sqrt(mean((test_nocat$recidivism - 
+                                                         predict(ols_full, newdata = 
+                                                         test_nocat))^2)),
+                                              rmse_ridge,
+                                              rmse_lasso,
+                                              rmse_enet))
+
+kable(comp_tb, digits = 4)
+```
+
+Elastic Net has the lowest out-of-sample RMSE (0.4583), slightly better than LASSO (0.4593).
+
+Kitchen sink had the best in-sample fit, but that is due to overfitting which led to a worse fit for out-sample data.
+
+The table indicates there is a sweet spot between bias and variance. Completely eliminating bias (such as in the kitchen-sink model) had high variance which caused overfitting and very poor generalization. Meanwhile, models like the Ridge, LASSO, and Elastic Net saw increase in bias but a big a reduction in variance which improved the out-of-sample performance.
 
 ## Baker Article Connection
 
+Lasso helped to narrow the disagreement by selecting the relevant peer firms based on a predictive relationship with the outcome instead of either of the expert's (informed but not entirely unbiased) choice. This change helped to reduce the differences in the model's specification allowing the two to find more similar outcomes
+
+The traditional OLS approach gives the most room for manipulation due to the ability to manually select which variables are included in the model. Instead of having the variables included or not included through some algorithm (LASSO), researches can "turn on" or "turn off" specific variables on their own accord.
+
 ## Prediction vs Explanation
 
+The LASSO coefficient on priors_count would not answer any causal question as LASSO eliminates/choices variables for prediction, not causal inference. Thus, LASSO does not account for confouding or omitted variable bias. The resulting estimated relationship shows correlation in the dataset not necessarily a causal effect.
+
+Regression for prediction aims to minimize the out-of-sample error, allowing for more accurate predictions of outcomes, but it does not consider whether the relationships are causal. Meanwhile, regression for causal inference hopes to estimate how one variable affects another which requires much more careful strategies.
+
 ## Algorithmic Fairness
+
+```{r}
+pred_test <- predict(model2.2, newdata = test_nocat)
+
+white <- test_nocat$black == 0 &
+  test_nocat$hispanic == 0 &
+  test_nocat$asian == 0 &
+  test_nocat$other_race == 0 &
+  test_nocat$native_american == 0
+
+mean(pred_test[test_nocat$black == 1], na.rm = TRUE)
+mean(pred_test[white], na.rm = TRUE)
+
+mean(test_nocat$recidivism[test_nocat$black == 1], na.rm = TRUE)
+mean(test_nocat$recidivism[white], na.rm = TRUE)
+
+sum(test_nocat$black == 1)
+sum(white)
+```
+
+Predicted Recidivism Rate: black defendants = 0.512
+
+Predicted Recidivism Rate: white defendants = 0.379
+
+Thus we can see there is a clear difference as the predicted risk of recidivism is higher for black defendants.
+
+Actual Recidivism Rate: black defendants = 0.521
+
+Actual Recidivism Rate: white defendants = 0.402
+
+Actual rates of recidivism are higher for black defendants than white defendants, but both are underpredicted by the model.
+
+Predictive algorithms can help in criminal justice by improving accuracy for rates like recidivism rates for a specific subsection of the population. However, you risk applying any skewness or bias from the model on the population. Moreover, underlying disparities may be exacerbated. While black recidivism rates are higher for black defendants, the predicted difference is much larger than the real difference.
