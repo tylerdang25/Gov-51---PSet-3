@@ -157,9 +157,57 @@ Cross-validation is correct for choosing $\lambda$ because it minimizes predicti
 
 ## Build the Expanded Model
 
+```{r}
+train_nocat <- subset(train, select = -priors_cat)
+test_nocat  <- subset(test,  select = -priors_cat)
+
+f_full <- recidivism ~ (.)^2 +
+  I(age^2) + I(priors_count^2) +
+  I(juv_fel_count^2) + I(juv_misd_count^2) +
+  I(juv_other_count^2)
+
+X_train <- model.matrix(f_full, data = train_nocat)[, -1]
+X_test  <- model.matrix(f_full, data = test_nocat)[, -1]
+
+y_train <- train_nocat$recidivism
+y_test  <- test_nocat$recidivism
+
+ncol(X_train)
+nrow(train_nocat)
+nrow(train_nocat) / ncol(X_train)
+```
+
+The expanded model has 141 predictors.
+
+Thus the ratio is 40.9 which means there are less observations per predictor increasing the chance of overfitting.
+
 ## Fit OLS with the Kitchen Sink
 
+```{r}
+ols_full <- lm(f_full, data = train_nocat)
+
+pred_train <- predict(ols_full, newdata = train_nocat)
+rmse_train <- sqrt(mean((train_nocat$recidivism - pred_train)^2))
+rmse_train
+
+pred_test <- predict(ols_full, newdata = test_nocat)
+rmse_test <- sqrt(mean((test_nocat$recidivism - pred_test)^2))
+rmse_test
+
+rmse_test - rmse_train
+```
+
+The in-sample RMSE is 0.4485
+
+The out-of-sample RMSE is 0.4890
+
+The difference is 0.0405
+
+Compared to the simple model with a gap of about 0.0016, this gap is much larger. This expanded model is overfitting. With so many predictors, the model fits the training data better, which is why there is a lower in-sample RMSE, but performs worse on new data, leading to a higher out-of-sample RMSE. This happens because the model is capturing noise rather than true underlying patterns.
+
 ## The Overfitting Lesson
+
+Adding so many interaction terms increased the models flexibility, so it began to individually fit every data point instead of finding a good fit. This led to increased noise in the model. When we use a new data set, the model did not predict well because it was still using the noise from the training set. This is overfitting.
 
 # 4. Ridge Regression: Shrink Everything
 
