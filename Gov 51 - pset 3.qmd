@@ -5,6 +5,8 @@ format: pdf
 editor: visual
 ---
 
+<https://github.com/tylerdang25/Gov-51---PSet-3>
+
 # 1. Setup And Data Exploration
 
 ## Load Packages and Data
@@ -76,6 +78,8 @@ ggplot(rates, aes(x = priors_cat, y = rate, fill = priors_cat)) +
 ```
 
 We can see that as the number of prior offenses increases, the recidivism rate increases.
+
+{{< pagebreak >}}
 
 # 2. OLS Baseline
 
@@ -153,6 +157,8 @@ Cross-validation is more reliable because it averages over multiple splits inste
 
 Cross-validation is correct for choosing $\lambda$ because it minimizes prediction error. By evaluating many possible values, it balances bias and variance thus reducing overfitting.
 
+{{< pagebreak >}}
+
 # 3. The Kitchen Sink: What Happens when You Add Too Many Predictors?
 
 ## Build the Expanded Model
@@ -209,6 +215,8 @@ Compared to the simple model with a gap of about 0.0016, this gap is much larger
 
 Adding so many interaction terms increased the models flexibility, so it began to individually fit every data point instead of finding a good fit. This led to increased noise in the model. When we use a new data set, the model did not predict well because it was still using the noise from the training set. This is overfitting.
 
+{{< pagebreak >}}
+
 # 4. Ridge Regression: Shrink Everything
 
 ## Fit Ridge with Cross-validation
@@ -249,6 +257,8 @@ coef(cv_ridge, s = "lambda.min")
 
 No, Ridge did not eliminate any variables. Ridge shrinks coefficients towards zero but does not set them exactly to zero. So, we can see that most coefficients are very small but not zero. The entries shown as "." are not zero.
 
+{{< pagebreak >}}
+
 # 5. LASSO Regression: Shrink and Select
 
 ## Fit LASSO with Cross–Validation
@@ -263,6 +273,8 @@ plot(cv_lasso)
 ```
 
 The optimal $\lambda$ is 0.00769
+
+{{< pagebreak >}}
 
 ## LASSO Variable Selection
 
@@ -307,6 +319,8 @@ LASSO RMSE: 0.4593
 
 Lasso performs the best for out-of-sample RMSE for all tests we have done.
 
+{{< pagebreak >}}
+
 # 6. Model Comparison and Interpretation
 
 ## Elastic Net
@@ -341,9 +355,11 @@ comp_tb <- data.frame(Model = c("OLS (main effects, 16 vars)",
                                               ncol(X_train),
                                               ncol(X_train),
                                               sum(as.matrix(coef(cv_lasso, 
-                                                                 s = "lambda.min")) != 0) - 1,
+                                                                 s = "lambda.min")) != 0) 
+                                              - 1,
                                               sum(as.matrix(coef(cv_enet, 
-                                                                 s = "lambda.min")) != 0) - 1),
+                                                                 s = "lambda.min")) != 0) 
+                                              - 1),
                                "Out RMSE" = c(rmse_test,
                                               sqrt(mean((test_nocat$recidivism - 
                                                          predict(ols_full, newdata = 
