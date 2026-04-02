@@ -81,11 +81,77 @@ We can see that as the number of prior offenses increases, the recidivism rate i
 
 ## Train/test Split
 
+```{r}
+set.seed(51)
+n <- nrow(compas)
+train_idx <- sample(1:n, size = floor(0.8 * n))
+train <- compas[train_idx, ]
+test <- compas[-train_idx, ]
+
+nrow(train)
+nrow(test)
+```
+
+There are 5771 observations in the training set, and 1443 in the test set.
+
 ## Fit OLS with Main Effects Only
+
+```{r}
+set.seed(51)
+train_nocat <- subset(train, select = -priors_cat)
+model2.2 <- lm(recidivism ~ ., data = train_nocat)
+summary(model2.2)
+```
+
+Variables with a significant at the 5% level: age, female, priors_count, felony, age_25_45, has_juv_misd.
+
+A one-unit increase in the number of prior offenses is associated with a 0.0295 increase in the probability of recidivism, holding all other variables constant.
 
 ## In-Sample vs Out-of-sample RMSE
 
+```{r}
+set.seed(51)
+yhat_train <- predict(model2.2, newdata = train)
+rmse_train <- sqrt(mean((yhat_train - train$recidivism)^2))
+rmse_train
+
+yhat_test <- predict(model2.2, newdata = test)
+rmse_test <- sqrt(mean((yhat_test - test$recidivism)^2))
+rmse_test
+
+rmse_test - rmse_train
+```
+
+The in-sample RMSE: 0.4606
+
+The out-of-sample RMSE: 0.4622
+
+The gap is 0.0016, which is very small, indicating that the model is nearly identical for the training and test data, so there is no meaningful overfitting with 16 predictors.
+
 ## Cross-Validation by Hand
+
+```{r}
+set.seed(51)
+folds <- sample(rep(1:5, length.out = nrow(train_nocat)))
+rmse_cv <- numeric(5)
+
+for (k in 1:5) {
+  train_k <- train_nocat[folds != k, ]
+  test_k <- train_nocat[folds == k, ]
+  
+  model_k <- lm(recidivism ~ ., data = train_k)
+  pred_k <- predict(model_k, newdata = test_k)
+  
+  rmse_cv[k] <- sqrt(mean((test_k$recidivism - pred_k)^2))}
+
+mean(rmse_cv)
+```
+
+A 5-fold CV RMSE of 0.4620 is extremely close to the single-split test RMSE, indicating very similar estimated out-of-sample performance.
+
+Cross-validation is more reliable because it averages over multiple splits instead of using a single split that may not be representative. Using multiple splits therefore will reduce variability and give more stable estimates.
+
+Cross-validation is correct for choosing $\lambda$ because it minimizes prediction error. By evaluating many possible values, it balances bias and variance thus reducing overfitting.
 
 # 3. The Kitchen Sink: What Happens when You Add Too Many Predictors?
 
